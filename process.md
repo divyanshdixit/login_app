@@ -34,7 +34,7 @@
 ### setup the backend server:
     # npm init -y
     
-    # npm install express (for creating http server) cors (sharing data b/w two different domains) mongoose mongodb-memory-server (to create mongodb in the memory) morgan (log every request inside the console) nodemon (to watch the server whenever any changes occur) dotenv (for reading the env variables)
+    # npm install express (for creating http server) cors (sharing data b/w two different domains) mongoose mongodb-memory-server (to create mongodb in the memory) morgan (log every request inside the console) nodemon (to watch the server whenever any changes occur) dotenv (for reading the env variables) bcrpt(it helps in storing hash password instead of plain text) jsonwebtoken (for getting the token to authenticate the user )
 
     # create file for create express(http) server=> server.js
 
@@ -55,6 +55,21 @@
     # for this we create new file (routes/index.js)
     # use Router from express. const router = Router();
     # create route from router like router.route('/register').post(controller function)
-    # then make a controller file for the controllers of all the routes.
+    # then make a controller file for the controllers of all the routes.(appController)
 
+    export async function register(req, res){
+        re.json('register route!');
+    }
+
+# correct file structure:
+
+    ## model folder => here we write the database schema structure.
+        # user model = mongoose.Schema
+
+
+    # jwt token => it relase authorzied token so that user can use that token to authenticate
+    user for this we have to use jsonwebtoken
+    
+    import {Jwt} from 'jsonwebtoken';
+    Jwt.sign(payload, secret in base64, {expiresIn:'2h'})
 */
