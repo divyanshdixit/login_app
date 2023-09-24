@@ -35,6 +35,7 @@
     # npm init -y
     
     # npm install express (for creating http server) cors (sharing data b/w two different domains) mongoose mongodb-memory-server (to create mongodb in the memory) morgan (log every request inside the console) nodemon (to watch the server whenever any changes occur) dotenv (for reading the env variables) bcrpt(it helps in storing hash password instead of plain text) jsonwebtoken (for getting the token to authenticate the user )
+    otp-generator (to generate the otp)
 
     # create file for create express(http) server=> server.js
 
@@ -72,4 +73,14 @@
     
     import {Jwt} from 'jsonwebtoken';
     Jwt.sign(payload, secret in base64, {expiresIn:'2h'})
+
+    <!-- get user -->
+    # we will make get user api 
+
+    # make a auth middleware , it will use for check the logged in user
+    # pass a authentication token and get it in => req.headers.authorization
+
+    <!-- Generate otp -->
+    # use otp-generator
+    import optGenerator from 'otp-generator';
 */

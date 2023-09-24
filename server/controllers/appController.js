@@ -2,8 +2,8 @@ import userModel from "../model/user.model.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from 'jsonwebtoken';
-
-
+import { checkEmailExists, checkUserNameExists } from "../middleware/checkUsername.js";
+import otpGenerator from 'otp-generator';
 
 dotenv.config();
 
@@ -19,13 +19,12 @@ dotenv.config();
  * }
  */
 
-export async function register(req, res) {
+export async function register(req, res, next) {
   try {
     const { username, email, password, profile } = req.body;
     // first we have to check for username and email duplicacy
-    const checkUserName = await userModel.findOne({ username });
-    const checkEmail = await userModel.findOne({ email });
-
+    const checkUserName = await checkUserNameExists(res, username);
+    const checkEmail = await checkEmailExists(res, email);
     if (checkEmail == null && checkUserName == null) {
       // if is null (means user is new)
       if (password) {
@@ -129,12 +128,94 @@ export async function user(req, res) {
 }
 
 /**
- * PUT: http://localhost:8080/api/edituser
+ * PUT: http://localhost:8080/api/updateuser
  * @param :{
  * username:""
  * }
  */
 
-export async function editUser(req, res) {
-  res.json("edit user route!");
+export async function updateUser(req, res) {
+  try{
+    const {userid} = req.user;
+    const body = req.body;
+
+    const getUser = await userModel.findOne({_id: userid});
+    if(body.username){
+      const checkUserName = await checkUserNameExists(res, body.username);
+      if(getUser.username === body.username && checkUserName !== null){
+        delete body.username;
+      }
+    }
+
+    if(Object.keys(body).length){
+      await userModel.updateOne({_id: userid}, body);
+      res.status(200).send({message: 'Record update successfully', data: body});
+    }else {
+      res.status(401).send({error: 'Nothing to update', data: body});
+    }
+
+  }catch(err){
+    res.status(500).send({error: `Something went wrong, ${err}`})
+  }
+}
+
+
+/**
+ * GET: http://localhost:8080/api/generateotp
+ * @param
+ */
+
+export async function generateOtp(req, res){
+  req.app.locals.OTP = await otpGenerator.generate(6,{lowerCaseAlphabets: false, specialChars: false});
+  console.log(req.app.locals.OTP)
+  res.status(200).send({code: req.app.locals.OTP})
+}
+
+/**
+ * POST: http://localhost:8080/api/verifyotp
+ * @param:{
+ *  otp: 'value'
+ * }
+ */
+
+export async function verifyOtp(req, res){
+  if(req.app.locals.OTP === req.body.otp){
+    req.app.locals.OTP = null;
+    req.app.locals.resetSession = true;
+    return res.status(200).send({message:' verify successfully'})
+  }
+  return res.status(400).send({error: 'invalid otp'})
+}
+
+/**
+ * PUT: http://localhost:8080/api/resetpassword
+ * @param:{
+ *  password: 'new password'
+ * }
+ */
+
+export async function resetPassword(req, res){
+  try{
+    const {password} = req.body;
+    const {username} = req.user;
+
+    if(req.app.locals.resetSession){
+      req.app.locals.resetSession = false; 
+      const user = await checkUserNameExists(req, username);
+      if(user){
+        const hashPassword = await bcrypt.hash(password, 10);
+        const updateRecord = await userModel.updateOne({_id: user._id}, {password: hashPassword});
+        if(updateRecord){
+          res.status(200).send({message: 'Password updated successfully!'});
+        }else{
+          res.status(401).send({error: 'Unable to reset the password'})
+        }
+      }
+    }else {
+      res.status(300).send({error: 'Session expired!'})
+    }
+  }catch(err){
+    res.status(500).send({error: `Something went wrong, ${err}`})
+  }
+  
 }
